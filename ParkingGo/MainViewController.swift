@@ -37,8 +37,11 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
             req.httpMethod = "POST"
             if let value = cookie?.value {
                 let params:[String:String] = ["UserInfo":value]
-                let postString = self.getPostString(params: params)
-                req.httpBody = postString.data(using: .utf8)
+                do {
+                    let jsonData = try JSONSerialization.data(withJSONObject: params, options: .prettyPrinted)
+                    req.httpBody = jsonData
+                } catch {
+                }
             }
             if let name = cookie?.name, let value = cookie?.value {
                 req.setValue("\(name)=\(value);", forHTTPHeaderField: "Cookie")
@@ -52,7 +55,6 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
 //            }
 //            let htmlStr = try! String(contentsOfFile: fileUrl, encoding: .utf8)
 //            webView.loadHTMLString(htmlStr, baseURL: Bundle.main.bundleURL)
-            
             
             serverUrl = Constants.url.login
             let req = URLRequest.init(url: URL(string: serverUrl)!)
@@ -106,14 +108,6 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
         }
     }
     
-    func getPostString(params:[String:String]) -> String {
-        var data = [String]()
-        for(key, value) in params {
-            data.append(key + "=\(value)")
-        }
-        return data.map { String($0) }.joined(separator: "&")
-    }
-   
     
     @objc private func printCookie  () {
         guard let url = webView.url else {
@@ -166,13 +160,21 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
         return js
     }
     
-    
     //MARK:: notificationHandler
     @objc func notificationHandler(_ notification:NSNotification) {
         if notification.name.rawValue == Constants.notiName.pushData {
             self.serverUrl = Constants.url.pushRedirect
-            let req = URLRequest(url: URL(string: serverUrl)!)
-            
+            var req = URLRequest(url: URL(string: serverUrl)!)
+            req.httpMethod = "POST"
+            if let jsonDic = notification.object as? [String:Any] {
+                let params = ["PushMessage": jsonDic]
+                do {
+                    let jsonData = try JSONSerialization.data(withJSONObject: params, options: .prettyPrinted)
+                    req.httpBody = jsonData
+                } catch {
+                    
+                }
+            }
             webView.load(req)
         }
     }

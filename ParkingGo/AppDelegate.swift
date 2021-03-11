@@ -96,39 +96,77 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         })
     }
+    func remakePushData(_ userInfo:[String:Any]?) -> [String:Any]? {
+        guard let userInfo = userInfo else {
+            return nil
+        }
+        var data:[String:Any] = [:]
+        let keys = ["pushType", "MP_ID", "POSTMB_DEVICE_NAME", "DONG", "HO", "InTime", "InDay", "VehicleNo", "ContentTitle", "Message"];
+        for key in keys {
+            if let value = userInfo[key] {
+                data[key] = value
+            }
+        }
+        var pushData:[String:Any] = [:]
+        pushData["registration_ids"] = Messaging.messaging().fcmToken
+        pushData["data"] = data
+        pushData["priority"] = "high"
+        
+        return pushData
+    }
+    
+    func getJsonData(_ data:[String:Any]) -> String? {
+        do {
+            let jsData = try JSONSerialization.data(withJSONObject: data, options: .prettyPrinted)
+            let json = String.init(data: jsData, encoding: .utf8)
+            return json
+        } catch {
+            print("diction to json error")
+            return nil
+        }
+    }
 }
+
 extension AppDelegate: UNUserNotificationCenterDelegate {
     //앱이 켜진상태, Forground
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         
-        let userInfo = notification.request.content.userInfo
+        let userInfo = notification.request.content.userInfo as? [String:Any]
         
-        guard let aps = userInfo["aps"] as? [String:Any], let alert = aps["alert"] as? [String:Any] else {
+        guard let _ = userInfo?["pushType"] as? String else {
             return
         }
-//        guard let pushType = userInfo["pushType"] as? String else {
-//            return
-//        }
         
-        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now()+1) {
-            NotificationCenter.default.post(name: NSNotification.Name(rawValue: Constants.notiName.pushData), object: userInfo)
+        guard let data = remakePushData(userInfo) else {
+            return
+        }
+        
+        if let title = data["ContentTitle"] as? String, let msg = data["Message"] as? String {
+            let alert = UIAlertController.init(title: title, message: msg, preferredStyle: .alert)
+            alert.addAction(UIAlertAction.init(title: "Ok", style: .default, handler: { (action) in
+                alert.dismiss(animated: true, completion: nil)
+            }))
+            AppDelegate.instance.window?.rootViewController?.present(alert, animated: true, completion: nil)
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now()) {
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: Constants.notiName.pushData), object: data)
         }
     }
     
     //앱이 백그라운드 들어갔을때 푸쉬온것을 누르면 여기 탄다.
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         
-        let userInfo = response.notification.request.content.userInfo
-        guard let aps = userInfo["aps"] as? [String:Any], let alert = aps["alert"] as? [String:Any] else {
+        guard let userInfo = response.notification.request.content.userInfo as? [String:Any],
+              let _ = userInfo["pushType"] as? String else {
+            return
+        }
+        guard let data = remakePushData(userInfo) else {
             return
         }
         
-//        guard let pushType = userInfo["pushType"] as? String else {
-//            return
-//        }
-        
-        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now()+1) {
-            NotificationCenter.default.post(name: NSNotification.Name(rawValue: Constants.notiName.pushData), object: userInfo)
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now()) {
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: Constants.notiName.pushData), object: data)
         }
     }
     

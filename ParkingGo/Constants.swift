@@ -61,7 +61,27 @@ C.      정보 요청
 혹시, 내용에 문제가 있거나, 프로세스가 이상한 부분이 있으면 회신바랍니다.
 수고하세요.
  */
-
+//
+//[앱명]:
+//    마이파킹 방문예약
+//
+//[설명]:
+//    아파트 입주민의 주차 편의를 위하여 방문예약앱을 서비스하게 되었습니다.
+//    실시간으로 방문자의 주차 예약을 함으로써 기다림과 불편함을 해소하며
+//    즐겨찾기를 통해 쉽고 빠르게 차량 예약을 할 수 있습니다.
+//
+//[호출URL]
+//    http://apt.myparking.co.kr/aptmobile
+//
+//[개인정보보호 URL]
+//    http://apt.myparking.co.kr/AptMobile/User/PersonalPrivacy.html
+//
+//[테스트 계정]
+//    아파트명: 아파트
+//    동: 101
+//    호: 101
+//    비밀번호: 1111
+//
 
 import UIKit
 public func RGB(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat) -> UIColor {
@@ -73,7 +93,7 @@ public func RGBA(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat, _ a: CGFloat) -> UICo
 class Constants: NSObject {
     
     struct url {
-        static let base = "http://14.192.80.164/AptMobile"
+        static let base = "http://apt.myparking.co.kr/aptmobile" //"http://14.192.80.164/AptMobile"
         static let login = "http://14.192.80.164/AptMobile/User/Logon.aspx"
         static let loginCheck = "http://14.192.80.164/AptMobile/User/LoginCheck.aspx"
         static let pushRedirect = "http://14.192.80.164/AptMobile/PushMessage/InPushMessage.aspx"
