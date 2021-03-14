@@ -77,7 +77,6 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
         }
     }
     
-    
     @objc private func printCookie  () {
         guard let url = webView.url else {
             return
