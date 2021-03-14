@@ -22,44 +22,13 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
         
         NotificationCenter.default.addObserver(self, selector: #selector(notificationHandler(_ :)), name: Notification.Name(Constants.notiName.pushData), object: nil)
         
+
+        serverUrl = Constants.url.base
         self.setupWebView()
-        if let cookieDictionary = UserDefaults.standard.object(forKey: Constants.dfsKey.cookies) as? [String:Any], cookieDictionary.isEmpty == false {
-            serverUrl = Constants.url.loginCheck
-
-            self.restoreCookies()
-            let cookies = cookieDictionary
-                .compactMap({ $0.value as? [HTTPCookiePropertyKey: Any] })
-                .compactMap({ HTTPCookie(properties: $0) })
-
-            let cookie = cookies.first;
-            var req = URLRequest.init(url: URL(string: serverUrl)!)
-
-            req.httpMethod = "POST"
-            if let value = cookie?.value {
-                let params:[String:String] = ["UserInfo":value]
-                do {
-                    let jsonData = try JSONSerialization.data(withJSONObject: params, options: .prettyPrinted)
-                    req.httpBody = jsonData
-                } catch {
-                }
-            }
-            if let name = cookie?.name, let value = cookie?.value {
-                req.setValue("\(name)=\(value);", forHTTPHeaderField: "Cookie")
-            }
-
-            self.webView.load(req)
-        }
-        else {
-//            guard let fileUrl = Bundle.main.path(forResource: "test", ofType: "html") else {
-//                return
-//            }
-//            let htmlStr = try! String(contentsOfFile: fileUrl, encoding: .utf8)
-//            webView.loadHTMLString(htmlStr, baseURL: Bundle.main.bundleURL)
-            
-            serverUrl = Constants.url.login
-            let req = URLRequest.init(url: URL(string: serverUrl)!)
-            self.webView.load(req)
-        }
+        self.restoreCookies()
+        let req = URLRequest.init(url: URL(string: serverUrl)!)
+        self.webView.load(req)
+        
         let headBlock = {
             self.webView.reload()
             DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 2.0) {
@@ -121,37 +90,44 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
     }
   
     func storeCookies() {
-        guard let serverBaseUrl = URL(string: serverUrl) else {
+        guard let url = URL(string: serverUrl) else {
             return
         }
         let cookiesStorage: HTTPCookieStorage = .shared
-        var cookieDict: [String: Any] = [:]
-        cookiesStorage.cookies(for: serverBaseUrl)?.forEach({ cookieDict[$0.name] = $0.properties })
+        var saveCookies: [String: Any] = [:]
+        cookiesStorage.cookies(for: url)?.forEach({ saveCookies[$0.name] = $0.properties })
         
-        let userDefaults = UserDefaults.standard
-        userDefaults.set(cookieDict, forKey: Constants.dfsKey.cookies)
+        if saveCookies.isEmpty == false {
+            UserDefaults.standard.setValue(saveCookies, forKey: Constants.dfsKey.cookies)
+            UserDefaults.standard.synchronize()
+        }
     }
+    
     func restoreCookies() {
-        let cookiesStorage: HTTPCookieStorage = .shared
-        let userDefaults = UserDefaults.standard
-        guard let cookieDictionary = userDefaults.dictionary(forKey: Constants.dfsKey.cookies) else {
+        guard let saveCookies = UserDefaults.standard.dictionary(forKey: Constants.dfsKey.cookies), saveCookies.isEmpty == false else {
             return
         }
         
-        let cookies = cookieDictionary
+        let cookies = saveCookies
             .compactMap({ $0.value as? [HTTPCookiePropertyKey: Any] })
             .compactMap({ HTTPCookie(properties: $0) })
-        
+        let cookiesStorage: HTTPCookieStorage = .shared
         cookiesStorage.setCookies(cookies, for: URL(string: serverUrl), mainDocumentURL: nil)
+        for cookie in cookies {
+            webView.configuration.websiteDataStore.httpCookieStore.setCookie(cookie, completionHandler: nil)
+        }
     }
     func removeCookies() {
         UserDefaults.standard.removeObject(forKey: Constants.dfsKey.cookies)
         UserDefaults.standard.synchronize()
-        guard let serverBaseUrl = URL(string: serverUrl) else {
+        
+        guard let url = URL(string: serverUrl) else {
             return
         }
-        HTTPCookieStorage.shared.cookies(for: serverBaseUrl)?.forEach({ (cookie) in
+        
+        HTTPCookieStorage.shared.cookies(for: url)?.forEach({ (cookie) in
             HTTPCookieStorage.shared.deleteCookie(cookie)
+            HTTPCookieStorage.shared.removeCookies(since: Date())
         })
     }
   
@@ -181,14 +157,14 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
     //MARK:: WKScriptMessageHandler
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         
-//        let msg = "Recive native app action \nname: \(message.name),\ndata:\((message.body as? String) ?? "")"
+        let msg = "=== Recive native app action name: \(message.name), data:\((message.body as? String) ?? "")"
 //        self.view.makeToast(msg)
-        
+        print(msg)
         if (message.name == "GetUserLoginInfo") {
             guard let userInfo = UserDefaults.standard.object(forKey: Constants.dfsKey.userInfo) else {
                 return
             }
-            let jsFunc = "javascript:ReceiveUserLoginInfo(\(userInfo));"
+            let jsFunc = "javascript:ReceiveUserLoginInfo('\(userInfo)')"
             self.webView.evaluateJavaScript(jsFunc) { (result, error) in
                 let msg = "native app javascript func call.\n funcname: \(jsFunc)\n\ncallback:\(result ?? ""), error:\(String(describing: error))"
                 print(msg)
@@ -208,30 +184,29 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
             }
         }
         else if (message.name == "SetUserLoginInfo") {
-            guard let usrinfo = message.body as? String else {
-                return
+            if  let usrinfo = message.body as? String {
+                UserDefaults.standard.setValue(usrinfo, forKey: Constants.dfsKey.userInfo)
             }
-            UserDefaults.standard.setValue(usrinfo, forKey: Constants.dfsKey.userInfo)
+            else {
+                UserDefaults.standard.removeSuite(named: Constants.dfsKey.userInfo)
+            }
             UserDefaults.standard.synchronize()
         }
     }
 }
 
 extension MainViewController:  WKNavigationDelegate {
-    
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        decisionHandler(WKNavigationActionPolicy.allow)
-    }
+  
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, preferences: WKWebpagePreferences, decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
-        decisionHandler(WKNavigationActionPolicy.allow, preferences)
         print("== navigationAction \(navigationAction.request)")
+
         guard let url = webView.url?.absoluteString else {
             return
         }
-        if url.contains("Logon") {
-            
+        if url.lowercased().contains("logoff") {
+            self.removeCookies()
         }
-//        AppDelegate.instance.startIndicator()
+        decisionHandler(WKNavigationActionPolicy.allow, preferences)
     }
     func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
         decisionHandler(WKNavigationResponsePolicy.allow)
@@ -240,6 +215,13 @@ extension MainViewController:  WKNavigationDelegate {
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         //start indicator
         print("== didStartProvisionalNavigation: \(String(describing: webView.url?.absoluteString))")
+        guard let url = webView.url?.absoluteString else {
+            return
+        }
+        if url.lowercased().contains("logoff") {
+            self.removeCookies()
+        }
+        
     }
     func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
         print("== redirecturl: \(String(describing: webView.url?.absoluteString))")
@@ -253,27 +235,19 @@ extension MainViewController:  WKNavigationDelegate {
         guard let url = webView.url?.absoluteString else {
             return
         }
-        if url.contains("LogOff") == true
-            || url.contains("LogOut") == true {
+        if url.lowercased().contains("logoff") {
             self.removeCookies()
-            self.serverUrl = Constants.url.login
-            webView.load(URLRequest(url: URL(string: serverUrl)!))
         }
     }
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         print("== didFinish: \(String(describing: webView.url?.absoluteString))")
-//        AppDelegate.instance.stopIndicator()
+        guard let url = webView.url?.absoluteString else {
+            return
+        }
+        if url.lowercased().contains("logoff") {
+            self.removeCookies()
+        }
     }
-    
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        print("== didFail: \(String(describing: webView.url?.absoluteString))")
-//        AppDelegate.instance.stopIndicator()
-    }
-    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-        print("== webViewWebContentProcessDidTerminate: \(String(describing: webView.url?.absoluteString))")
-//        AppDelegate.instance.stopIndicator()
-    }
-    
 }
     
 extension MainViewController: WKUIDelegate {
