@@ -100,6 +100,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         guard let userInfo = userInfo else {
             return nil
         }
+//        ["MP_ID": 481598, "pushType": 정기차량, "HO": 1805, "gcm.message_id": 1615734663662635, "gcm.notification.message": 정기차량이 입차하였습니다. 확인하실려면 클릭하여 앱을 활성화하세요, "VehicleNo": 67다8250, "InTime": 14:42:20, "google.c.a.e": 1, "Message": 정기차량이 입차하였습니다. 확인하실려면 클릭하여 앱을 활성화하세요, "DONG": 116, "google.c.sender.id": 853625059658, "POSTMB_DEVICE_NAME": 서문입구1_LPR, "aps": {
+//            alert =     {
+//                title = "\Uc815\Uae30\Ucc28\Ub7c9\Uc774 \Uc785\Ucc28\Ud558\Uc600\Uc2b5\Ub2c8\Ub2e4.";
+//            };
+//            sound = default;
+//        }, "InDay": 2020-12-30, "gcm.notification.alert": 경보발생, "ContentTitle": 정기차량이 입차하였습니다.]
         var data:[String:Any] = [:]
         let keys = ["pushType", "MP_ID", "POSTMB_DEVICE_NAME", "DONG", "HO", "InTime", "InDay", "VehicleNo", "ContentTitle", "Message"];
         for key in keys {
@@ -107,17 +113,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 data[key] = value
             }
         }
-        var pushData:[String:Any] = [:]
-        pushData["registration_ids"] = Messaging.messaging().fcmToken
-        pushData["data"] = data
-        pushData["priority"] = "high"
         
-        return pushData
+//        var pushData:[String:Any] = [:]
+//        pushData["registration_ids"] = Messaging.messaging().fcmToken
+//        pushData["data"] = data
+//        pushData["priority"] = "high"
+        
+        return data
     }
     
     func getJsonData(_ data:[String:Any]) -> String? {
         do {
-            let jsData = try JSONSerialization.data(withJSONObject: data, options: .prettyPrinted)
+            let jsData = try JSONSerialization.data(withJSONObject: data, options: .sortedKeys)
             let json = String.init(data: jsData, encoding: .utf8)
             return json
         } catch {
@@ -130,16 +137,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 extension AppDelegate: UNUserNotificationCenterDelegate {
     //앱이 켜진상태, Forground
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        
-        let userInfo = notification.request.content.userInfo as? [String:Any]
-        
-        guard let _ = userInfo?["pushType"] as? String else {
+
+        guard let userInfo = notification.request.content.userInfo as? [String:Any], let pushType = userInfo["pushType"] as? String else {
             return
         }
         
         guard let data = remakePushData(userInfo) else {
             return
         }
+        
+//        let jsonString = self.getJsonData(userInfo)
         
         if let title = data["ContentTitle"] as? String, let msg = data["Message"] as? String {
             let alert = UIAlertController.init(title: title, message: msg, preferredStyle: .alert)

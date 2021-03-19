@@ -94,10 +94,14 @@ class Constants: NSObject {
     
     struct url {
         static let base = "http://apt.myparking.co.kr/aptmobile" //"http://14.192.80.164/AptMobile"
-        static let login = "http://14.192.80.164/AptMobile/User/Logon.aspx"
-        static let loginCheck = "http://14.192.80.164/AptMobile/User/LoginCheck.aspx"
-        static let pushRedirect = "http://14.192.80.164/AptMobile/PushMessage/InPushMessage.aspx"
-        static let test = "http://14.192.80.164/AptMobile/Support/MobileTest.aspx"
+//        http://apt.myparking.co.kr/AptMobile/PushMessage/InPushMessage.aspx?pushType=정기차량&id=12&deviceName=168.126.63.1&vehicleNo=11가1111&inDay=2021-03-10&inTime=21:23:12&dong=101&ho=101&p1=param1&p2=param2&p3=param3
+        static let pushRedirect = "http://apt.myparking.co.kr/AptMobile/PushMessage/InPushMessage.aspx"
+//        static let pushRedirect = "http://apt.myparking.co.kr/AptMobile/PushMessage/InPushMessageTest.aspx"
+        
+//        static let login = "http://14.192.80.164/AptMobile/User/Logon.aspx"
+//        static let loginCheck = "http://14.192.80.164/AptMobile/User/LoginCheck.aspx"
+
+        static let test = "http://apt.myparking.co.kr/aptmobile/Support/MobileTest.aspx"
     }
     struct dfsKey {
         static let cookies = "LoginCookiesKey"

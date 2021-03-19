@@ -16,13 +16,12 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
     var webView: WKCookieWebView!
     var popupWebView: WKWebView?
     var serverUrl:String!
-    
+    var tmpPushText = ""
     override func viewDidLoad() {
         super.viewDidLoad()
         
         NotificationCenter.default.addObserver(self, selector: #selector(notificationHandler(_ :)), name: Notification.Name(Constants.notiName.pushData), object: nil)
         
-
         serverUrl = Constants.url.base
         self.setupWebView()
         self.restoreCookies()
@@ -48,7 +47,6 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
             controller.add(self!, name: "GetUserLoginInfo")
             controller.add(self!, name: "SetUserLoginInfo")
             controller.add(self!, name: "GetMobileInfo")
-            
             config.allowsInlineMediaPlayback = true
             config.userContentController = controller
             config.preferences = pref
@@ -82,9 +80,9 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
             return
         }
         
-        print("=====================Cookies=====================")
+//        print("=====================Cookies=====================")
         HTTPCookieStorage.shared.cookies(for: url)?.forEach({ (cookie) in
-            print(cookie)
+//            print(cookie)
         })
     }
   
@@ -135,22 +133,83 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
         return js
     }
     
+//    "function changeContent(pushdata) { var x = document.getElementById('textArea'); x.value = pushdata; }
     //MARK:: notificationHandler
     @objc func notificationHandler(_ notification:NSNotification) {
+        
         if notification.name.rawValue == Constants.notiName.pushData {
-            self.serverUrl = Constants.url.pushRedirect
-            var req = URLRequest(url: URL(string: serverUrl)!)
-            req.httpMethod = "POST"
-            if let jsonDic = notification.object as? [String:Any] {
-                let params = ["PushMessage": jsonDic]
+            
+//            http://apt.myparking.co.kr/AptMobile/PushMessage/InPushMessage.aspx?
+//            pushType=정기차량&
+//            id=12&
+//            deviceName=168.126.63.1&
+//            vehicleNo=11가1111&
+//            inDay=2021-03-10&
+//            inTime=21:23:12&
+//            dong=101&
+//            ho=101&
+//            p1=param1&
+//            p2=param2&
+//            p3=param3
+            guard let params = notification.object as? [String: Any], let pushType = params["pushType"] as? String else {
+                return
+            }
+//            ["VehicleNo": 67다8250, "Message": 정기차량이 입차하였습니다. 확인하실려면 클릭하여 앱을 활성화하세요, "HO": 1805, "InDay": 2020-12-30, "pushType": 정기차량, "DONG": 116, "InTime": 14:42:20, "ContentTitle": 정기차량이 입차하였습니다.]
+            var url = Constants.url.pushRedirect
+            
+            let id = params["id"] ?? ""
+            let deviceName = params["deviceName"] ?? ""
+            let vehicleNo = params["VehicleNo"] ?? ""
+            let inDay = params["InDay"] ?? ""
+            let inTime = params["InTime"] ?? ""
+            let dong = params["DONG"] ?? ""
+            let ho = params["HO"] ?? ""
+            let p1 = params["p1"] ?? ""
+            let p2 = params["p2"] ?? ""
+            let p3 = params["p3"] ?? ""
+            
+            url.append("?pushType=\(pushType)")
+            url.append("&id=\(id)&deviceName=\(deviceName)&vehicleNo=\(vehicleNo)&inDay=\(inDay)&inTime=\(inTime)&dong=\(dong)&ho=\(ho)&p1=\(p1)&p2=\(p2)&p3=\(p3)")
+
+            print("== push url: \(url)")
+            guard let encodingUrl = url.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed),
+                  let reqUrl = URL(string: encodingUrl) else {
+                return
+            }
+            let request = URLRequest(url: reqUrl)
+            webView.load(request)
+            
+            /*
+//            req.httpMethod = "POST"
+//            req.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+//            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+//            req.addValue("application/json", forHTTPHeaderField: "Accept")
+//            req.setValue("text/html; charset=utf-8", forHTTPHeaderField:"Content-Type")
+//            req.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
                 do {
-                    let jsonData = try JSONSerialization.data(withJSONObject: params, options: .prettyPrinted)
-                    req.httpBody = jsonData
-                } catch {
+//                    let jsonData = try? JSONSerialization.data(withJSONObject: params, options: .prettyPrinted)
+//                    if let jsonData = jsonData {
+//                        req.httpBody = jsonData
+//                    }
+//                    let jsonStr = String(data: jsonData!, encoding: .utf8)!
+//                    print("push == json str : \(jsonStr)")
+                    var body = ""
+                    for (key, value) in params {
+                        body.append("\(key)=\(value)&")
+                    }
+                    body = String(body.dropLast())
+                    print("body: \(body)")
                     
+                    let bodyData = body.data(using: .utf8, allowLossyConversion: false)
+                    req.httpBody = bodyData
+                }
+                catch {
+                    print("json serialization error")
                 }
             }
-            webView.load(req)
+            */
+        
+//            webView.load(request)
         }
     }
     //MARK:: WKScriptMessageHandler
@@ -208,8 +267,11 @@ extension MainViewController:  WKNavigationDelegate {
         decisionHandler(WKNavigationActionPolicy.allow, preferences)
     }
     func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+//        if let response = navigationResponse.response as? HTTPURLResponse {
+//            print(" === response: \(response)")
+//        }
+//        print("== navigationResponse \(navigationResponse.response)")
         decisionHandler(WKNavigationResponsePolicy.allow)
-        print("== navigationResponse \(navigationResponse.response)")
     }
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         //start indicator
@@ -220,7 +282,6 @@ extension MainViewController:  WKNavigationDelegate {
         if url.lowercased().contains("logoff") {
             self.removeCookies()
         }
-        
     }
     func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
         print("== redirecturl: \(String(describing: webView.url?.absoluteString))")
