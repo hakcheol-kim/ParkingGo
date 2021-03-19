@@ -142,13 +142,13 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
             return
         }
         
-        guard let data = remakePushData(userInfo) else {
-            return
-        }
+//        guard let data = remakePushData(userInfo) else {
+//            return
+//        }
         
 //        let jsonString = self.getJsonData(userInfo)
         
-        if let title = data["ContentTitle"] as? String, let msg = data["Message"] as? String {
+        if let title = userInfo["ContentTitle"] as? String, let msg = userInfo["Message"] as? String {
             let alert = UIAlertController.init(title: title, message: msg, preferredStyle: .alert)
             alert.addAction(UIAlertAction.init(title: "Ok", style: .default, handler: { (action) in
                 alert.dismiss(animated: true, completion: nil)
@@ -157,7 +157,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         }
         
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now()) {
-            NotificationCenter.default.post(name: NSNotification.Name(rawValue: Constants.notiName.pushData), object: data)
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: Constants.notiName.pushData), object:userInfo)
         }
     }
     
@@ -168,12 +168,12 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
               let _ = userInfo["pushType"] as? String else {
             return
         }
-        guard let data = remakePushData(userInfo) else {
-            return
-        }
+//        guard let data = remakePushData(userInfo) else {
+//            return
+//        }
         
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now()) {
-            NotificationCenter.default.post(name: NSNotification.Name(rawValue: Constants.notiName.pushData), object: data)
+            NotificationCenter.default.post(name: NSNotification.Name(rawValue: Constants.notiName.pushData), object: userInfo)
         }
     }
     

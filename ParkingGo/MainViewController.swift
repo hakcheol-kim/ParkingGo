@@ -157,8 +157,8 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
 //            ["VehicleNo": 67다8250, "Message": 정기차량이 입차하였습니다. 확인하실려면 클릭하여 앱을 활성화하세요, "HO": 1805, "InDay": 2020-12-30, "pushType": 정기차량, "DONG": 116, "InTime": 14:42:20, "ContentTitle": 정기차량이 입차하였습니다.]
             var url = Constants.url.pushRedirect
             
-            let id = params["id"] ?? ""
-            let deviceName = params["deviceName"] ?? ""
+            let id = params["KeyID"] ?? ""
+            let deviceName = params["DeviceName"] ?? ""
             let vehicleNo = params["VehicleNo"] ?? ""
             let inDay = params["InDay"] ?? ""
             let inTime = params["InTime"] ?? ""
