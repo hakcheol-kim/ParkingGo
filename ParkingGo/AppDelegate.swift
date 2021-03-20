@@ -24,12 +24,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         FirebaseApp.configure()
         
+        print("==== app didfinish lauch option: \(launchOptions)")
         window = UIWindow.init(frame: UIScreen.main.bounds)
         let storyboard = UIStoryboard.init(name: "Main", bundle: nil)
         window!.rootViewController = storyboard.instantiateViewController(withIdentifier: "MainViewController")
         window!.makeKeyAndVisible()
         self.registApnsPushKey()
         KafkaRefreshDefaults.standard()?.headDefaultStyle = KafkaRefreshStyle.animatableRing
+        
         
         return true
     }
@@ -49,13 +51,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         }
     }
-    
+
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         
         if deviceToken.count == 0 {
             return
         }
-        print("==== apns token:\(deviceToken.hexString)")
+        print("==== app apns token:\(deviceToken.hexString)")
         //파이어베이스에 푸쉬토큰 등록
         Messaging.messaging().apnsToken = deviceToken
     }
@@ -67,9 +69,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         Messaging.messaging().appDidReceiveMessage(userInfo)
     }
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        print("=== apn token regist failed")
+        print("==== app apn token regist failed")
     }
     
+    func applicationWillEnterForeground(_ application: UIApplication) {
+        print("==== app willendforground")
+    }
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        print("==== app applicationDidBecomeActive")
+        
+        if let pushData = UserDefaults.standard.object(forKey: "PUSH_DATA") as? [String:Any] {
+            print("==== app willendforground \(pushData)")
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now()+0.2) {
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: Constants.notiName.pushData), object:pushData)
+                UserDefaults.standard.removeObject(forKey: "PUSH_DATA")
+                UserDefaults.standard.synchronize()
+            }
+        }
+    }
     func startIndicator() {
         DispatchQueue.main.async(execute: {
             if self.loadingView == nil {
@@ -141,12 +158,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         guard let userInfo = notification.request.content.userInfo as? [String:Any], let pushType = userInfo["pushType"] as? String else {
             return
         }
-        
-//        guard let data = remakePushData(userInfo) else {
-//            return
-//        }
-        
-//        let jsonString = self.getJsonData(userInfo)
+        print("==== app willPresent push data: \(userInfo)")
         
         if let title = userInfo["ContentTitle"] as? String, let msg = userInfo["Message"] as? String {
             let alert = UIAlertController.init(title: title, message: msg, preferredStyle: .alert)
@@ -156,7 +168,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
             AppDelegate.instance.window?.rootViewController?.present(alert, animated: true, completion: nil)
         }
         
-        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now()) {
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now()+0.1) {
             NotificationCenter.default.post(name: NSNotification.Name(rawValue: Constants.notiName.pushData), object:userInfo)
         }
     }
@@ -168,15 +180,11 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
               let _ = userInfo["pushType"] as? String else {
             return
         }
-//        guard let data = remakePushData(userInfo) else {
-//            return
-//        }
         
-        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now()) {
-            NotificationCenter.default.post(name: NSNotification.Name(rawValue: Constants.notiName.pushData), object: userInfo)
-        }
+        print("==== app didReceive push data: \(userInfo)")
+        UserDefaults.standard.setValue(userInfo, forKey: "PUSH_DATA")
+        UserDefaults.standard.synchronize()
     }
-    
 }
 extension AppDelegate: MessagingDelegate {
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
