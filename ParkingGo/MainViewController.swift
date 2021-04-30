@@ -17,6 +17,7 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
     var popupWebView: WKWebView?
     var serverUrl:String!
     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         NotificationCenter.default.addObserver(self, selector: #selector(notificationHandler(_ :)), name: Notification.Name(Constants.notiName.pushData), object: nil)
