@@ -11,31 +11,34 @@ import FirebaseMessaging
 import Toast_Swift
 import KafkaRefresh
 
+
 class MainViewController: UIViewController, WKScriptMessageHandler {
-    
     var webView: WKCookieWebView!
     var popupWebView: WKWebView?
     var serverUrl:String!
-    var tmpPushText = ""
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         NotificationCenter.default.addObserver(self, selector: #selector(notificationHandler(_ :)), name: Notification.Name(Constants.notiName.pushData), object: nil)
-        
+
         serverUrl = Constants.url.base
         self.setupWebView()
         self.restoreCookies()
-    
+
         let req = URLRequest.init(url: URL(string: serverUrl)!)
         self.webView.load(req)
-        
+
         let headBlock = {
             self.webView.reload()
+
             DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 2.0) {
                 self.webView.scrollView.headRefreshControl.endRefreshing()
             }
         }
         webView.scrollView.bindHeadRefreshHandler(headBlock, themeColor: RGB(245, 210, 70), refreshStyle: KafkaRefreshStyle.replicatorWoody)
+        AppDelegate.instance.startIndicator()
+        
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -43,6 +46,7 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
     }
+    
     private func setupWebView() {
         webView = WKCookieWebView.init(frame: self.view.bounds, configurationBlock: { [weak self] (config) in
             let pref = WKPreferences()
@@ -60,11 +64,14 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
         
         view.addSubview(webView)
             
-        webView.translatesAutoresizingMaskIntoConstraints = false
-        webView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 0).isActive = true;
-        webView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: 0).isActive = true;
-        webView.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 0).isActive = true;
-        webView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: 0).isActive = true;
+//        webView.translatesAutoresizingMaskIntoConstraints = false
+//        webView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 0).isActive = true;
+//        webView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: 0).isActive = true;
+//        webView.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 0).isActive = true;
+//        webView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: 0).isActive = true;
+        
+        webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        
         webView.allowsBackForwardNavigationGestures = true
         
         webView.evaluateJavaScript("navigator.userAgent") { [weak webView] (result, error) in
@@ -202,8 +209,8 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
             let phoneNum = ""
             let jsFunc = "javascript:ReceiveMobileInfo('\(mobileKey)', '\(phoneNum)')"
             self.webView.evaluateJavaScript(jsFunc) { (result, error) in
-                let msg = "native app javascript func call.\n funcname: \(jsFunc)\n\ncallback:\(result ?? ""), error:\(String(describing: error))"
-                print(msg)
+//                let msg = "native app javascript func call.\n funcname: \(jsFunc)\n\ncallback:\(result ?? ""), error:\(String(describing: error))"
+//                print(msg)
             }
         }
         else if (message.name == "SetUserLoginInfo") {
@@ -219,27 +226,25 @@ class MainViewController: UIViewController, WKScriptMessageHandler {
 }
 
 extension MainViewController:  WKNavigationDelegate {
-  
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, preferences: WKWebpagePreferences, decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
         print("== navigationAction \(navigationAction.request)")
 
         guard let url = webView.url?.absoluteString else {
             return
         }
+        
         if url.lowercased().contains("logoff") {
             self.removeCookies()
         }
+        
         decisionHandler(WKNavigationActionPolicy.allow, preferences)
     }
     func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
-//        if let response = navigationResponse.response as? HTTPURLResponse {
-//            print(" === response: \(response)")
-//        }
-//        print("== navigationResponse \(navigationResponse.response)")
+        
         decisionHandler(WKNavigationResponsePolicy.allow)
     }
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        //start indicator
+        
         print("== didStartProvisionalNavigation: \(String(describing: webView.url?.absoluteString))")
         guard let url = webView.url?.absoluteString else {
             return
@@ -253,6 +258,8 @@ extension MainViewController:  WKNavigationDelegate {
     }
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         print("== didFailProvisionalNavigation: \(String(describing: webView.url?.absoluteString))")
+        AppDelegate.instance.stopIndicator()
+        self.view.makeToast("네트워크 상태가 불안정합니다.\n잠시후 다시 시도해주세요.")
     }
     
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
@@ -272,6 +279,7 @@ extension MainViewController:  WKNavigationDelegate {
         if url.lowercased().contains("logoff") {
             self.removeCookies()
         }
+        AppDelegate.instance.stopIndicator()
     }
 }
     
@@ -300,7 +308,6 @@ extension MainViewController: WKUIDelegate {
             self.popupWebView = nil
         }
     }
-    
     
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
         

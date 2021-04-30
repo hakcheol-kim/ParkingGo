@@ -87,6 +87,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         }
     }
+
     func startIndicator() {
         DispatchQueue.main.async(execute: {
             if self.loadingView == nil {
