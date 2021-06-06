@@ -90,7 +90,6 @@ NS_ASSUME_NONNULL_BEGIN
         account:(NSString *)account
         handler:(nullable void (^)(NSError *))handler;
 
-- (void)setDataInCache:(NSData *)data forService:(NSString *)service account:(NSString *)account;
 @end
 
 NS_ASSUME_NONNULL_END

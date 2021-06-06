@@ -25,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
  *  The scope to be used when fetching/deleting a token for Firebase Messaging.
  */
 FOUNDATION_EXPORT NSString *const kFIRInstanceIDScopeFirebaseMessaging
-    NS_SWIFT_NAME(InstanceIDScopeFirebaseMessaging) DEPRECATED_ATTRIBUTE;
+    NS_SWIFT_NAME(InstanceIDScopeFirebaseMessaging);
 
 #if defined(__IPHONE_10_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_10_0
 /**
@@ -37,7 +37,7 @@ FOUNDATION_EXPORT NSString *const kFIRInstanceIDScopeFirebaseMessaging
  *  to control the rate of token updates on application servers.
  */
 FOUNDATION_EXPORT const NSNotificationName kFIRInstanceIDTokenRefreshNotification
-    NS_SWIFT_NAME(InstanceIDTokenRefresh) DEPRECATED_ATTRIBUTE;
+    NS_SWIFT_NAME(InstanceIDTokenRefresh);
 #else
 /**
  *  Called when the system determines that tokens need to be refreshed.
@@ -48,7 +48,7 @@ FOUNDATION_EXPORT const NSNotificationName kFIRInstanceIDTokenRefreshNotificatio
  *  to control the rate of token updates on application servers.
  */
 FOUNDATION_EXPORT NSString *const kFIRInstanceIDTokenRefreshNotification
-    NS_SWIFT_NAME(InstanceIDTokenRefreshNotification) DEPRECATED_ATTRIBUTE;
+    NS_SWIFT_NAME(InstanceIDTokenRefreshNotification);
 #endif  // defined(__IPHONE_10_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_10_0
 
 /**
@@ -150,10 +150,7 @@ typedef NS_ENUM(NSUInteger, FIRInstanceIDError) {
  * A class contains the results of InstanceID and token query.
  */
 NS_SWIFT_NAME(InstanceIDResult)
-__deprecated_msg("FIRInstanceIDResult is deprecated, please use FIRInstallations "
-                 "for app instance identifier handling and use FIRMessaging for "
-                 "FCM registration token handling.") @interface FIRInstanceIDResult
-    : NSObject<NSCopying>
+@interface FIRInstanceIDResult : NSObject <NSCopying>
 
 /**
  * An instanceID uniquely identifies the app instance.
@@ -187,9 +184,7 @@ __deprecated_msg("FIRInstanceIDResult is deprecated, please use FIRInstallations
  *  `[FIRInstanceID tokenWithAuthorizedEntity:scope:options:handler]`.
  */
 NS_SWIFT_NAME(InstanceID)
-__deprecated_msg("FIRInstanceID is deprecated, please use FIRInstallations for installation "
-                 "identifier handling and use FIRMessaging for FCM registration token handling.")
-    @interface FIRInstanceID : NSObject
+@interface FIRInstanceID : NSObject
 
 /**
  *  FIRInstanceID.
@@ -211,10 +206,7 @@ __deprecated_msg("FIRInstanceID is deprecated, please use FIRInstallations for i
  *                  are generated and returned. If instanceID and token fetching fail for some
  *                  reason the callback is invoked with nil `result` and the appropriate error.
  */
-- (void)instanceIDWithHandler:(FIRInstanceIDResultHandler)handler
-    __deprecated_msg("Use `Installations.installationID(completion:)` to get the app instance "
-                     "identifier instead. "
-                     "Use `Messaging.token(completion:)` to get FCM registration token instead.");
+- (void)instanceIDWithHandler:(FIRInstanceIDResultHandler)handler;
 
 /**
  *  Returns a token that authorizes an Entity (example: cloud service) to perform
@@ -258,8 +250,7 @@ __deprecated_msg("FIRInstanceID is deprecated, please use FIRInstallations for i
 - (void)tokenWithAuthorizedEntity:(NSString *)authorizedEntity
                             scope:(NSString *)scope
                           options:(nullable NSDictionary *)options
-                          handler:(FIRInstanceIDTokenHandler)handler
-    __deprecated_msg("Use Messaging.token(completion:) instead.");
+                          handler:(FIRInstanceIDTokenHandler)handler;
 
 /**
  *  Revokes access to a scope (action) for an entity previously
@@ -282,8 +273,7 @@ __deprecated_msg("FIRInstanceID is deprecated, please use FIRInstallations for i
  */
 - (void)deleteTokenWithAuthorizedEntity:(NSString *)authorizedEntity
                                   scope:(NSString *)scope
-                                handler:(FIRInstanceIDDeleteTokenHandler)handler
-    __deprecated_msg("Use `Messaging.deleteToken(completion:)` instead.");
+                                handler:(FIRInstanceIDDeleteTokenHandler)handler;
 
 #pragma mark - Identity
 
@@ -301,9 +291,7 @@ __deprecated_msg("FIRInstanceID is deprecated, please use FIRInstallations for i
  *                 a valid identifier is returned and a valid identifier for the
  *                 application instance.
  */
-- (void)getIDWithHandler:(FIRInstanceIDHandler)handler
-    NS_SWIFT_NAME(getID(handler:))
-        __deprecated_msg("Use `Installations.installationID(completion:)` instead.");
+- (void)getIDWithHandler:(FIRInstanceIDHandler)handler NS_SWIFT_NAME(getID(handler:));
 
 /**
  *  Resets Instance ID and revokes all tokens.
@@ -317,10 +305,7 @@ __deprecated_msg("FIRInstanceID is deprecated, please use FIRInstallations for i
  *  (like FCM, RemoteConfig or Analytics) or user explicitly calls Instance ID APIs to get an
  *  Instance ID and token again.
  */
-- (void)deleteIDWithHandler:(FIRInstanceIDDeleteHandler)handler NS_SWIFT_NAME(deleteID(handler:))
-                                __deprecated_msg("Use `Installations.delete(completion:)` instead. "
-                                                 "Also check `Messaging.deleteData(completion:)`"
-                                                 "if you want to delete FCM registration token.");
+- (void)deleteIDWithHandler:(FIRInstanceIDDeleteHandler)handler NS_SWIFT_NAME(deleteID(handler:));
 
 @end
 

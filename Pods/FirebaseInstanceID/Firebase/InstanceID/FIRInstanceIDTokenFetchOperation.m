@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-#import "Firebase/InstanceID/FIRInstanceIDTokenFetchOperation.h"
+#import "FIRInstanceIDTokenFetchOperation.h"
 
-#import "Firebase/InstanceID/FIRInstanceIDConstants.h"
-#import "Firebase/InstanceID/FIRInstanceIDDefines.h"
-#import "Firebase/InstanceID/FIRInstanceIDLogger.h"
-#import "Firebase/InstanceID/FIRInstanceIDTokenOperation+Private.h"
-#import "Firebase/InstanceID/FIRInstanceIDUtilities.h"
-#import "Firebase/InstanceID/NSError+FIRInstanceID.h"
-#import "Firebase/InstanceID/Private/FIRInstanceIDCheckinPreferences.h"
+#import "FIRInstanceIDCheckinPreferences.h"
+#import "FIRInstanceIDConstants.h"
+#import "FIRInstanceIDDefines.h"
+#import "FIRInstanceIDLogger.h"
+#import "FIRInstanceIDTokenOperation+Private.h"
+#import "FIRInstanceIDURLQueryItem.h"
+#import "FIRInstanceIDUtilities.h"
+#import "NSError+FIRInstanceID.h"
 
-#import "FirebaseCore/Sources/Private/FirebaseCoreInternal.h"
+#import <FirebaseCore/FIRAppInternal.h>
+#import <FirebaseCore/FIRHeartbeatInfo.h>
 
 // We can have a static int since this error should theoretically only
 // happen once (for the first time). If it repeats there is something
@@ -64,16 +66,15 @@ NSString *const kFIRInstanceIDHeartbeatTag = @"fire-iid";
 
   // Build form-encoded body
   NSString *deviceAuthID = self.checkinPreferences.deviceID;
-  NSMutableArray<NSURLQueryItem *> *queryItems =
+  NSMutableArray<FIRInstanceIDURLQueryItem *> *queryItems =
       [[self class] standardQueryItemsWithDeviceID:deviceAuthID scope:self.scope];
-  [queryItems addObject:[NSURLQueryItem queryItemWithName:@"sender" value:self.authorizedEntity]];
-  [queryItems addObject:[NSURLQueryItem queryItemWithName:@"X-subtype"
-                                                    value:self.authorizedEntity]];
+  [queryItems addObject:[FIRInstanceIDURLQueryItem queryItemWithName:@"sender"
+                                                               value:self.authorizedEntity]];
+  [queryItems addObject:[FIRInstanceIDURLQueryItem queryItemWithName:@"X-subtype"
+                                                               value:self.authorizedEntity]];
 
-  if (self.instanceID.length > 0) {
-    [queryItems addObject:[NSURLQueryItem queryItemWithName:kFIRInstanceIDParamInstanceID
-                                                      value:self.instanceID]];
-  }
+  [queryItems addObjectsFromArray:[self queryItemsWithInstanceID:self.instanceID]];
+
   // Create query items from passed-in options
   id apnsTokenData = self.options[kFIRInstanceIDTokenOptionsAPNSKey];
   id apnsSandboxValue = self.options[kFIRInstanceIDTokenOptionsAPNSIsSandboxKey];
@@ -82,22 +83,21 @@ NSString *const kFIRInstanceIDHeartbeatTag = @"fire-iid";
     NSString *APNSString = FIRInstanceIDAPNSTupleStringForTokenAndServerType(
         apnsTokenData, ((NSNumber *)apnsSandboxValue).boolValue);
     // The name of the query item happens to be the same as the dictionary key
-    NSURLQueryItem *item = [NSURLQueryItem queryItemWithName:kFIRInstanceIDTokenOptionsAPNSKey
-                                                       value:APNSString];
+    FIRInstanceIDURLQueryItem *item =
+        [FIRInstanceIDURLQueryItem queryItemWithName:kFIRInstanceIDTokenOptionsAPNSKey
+                                               value:APNSString];
     [queryItems addObject:item];
   }
   id firebaseAppID = self.options[kFIRInstanceIDTokenOptionsFirebaseAppIDKey];
   if ([firebaseAppID isKindOfClass:[NSString class]]) {
     // The name of the query item happens to be the same as the dictionary key
-    NSURLQueryItem *item =
-        [NSURLQueryItem queryItemWithName:kFIRInstanceIDTokenOptionsFirebaseAppIDKey
-                                    value:(NSString *)firebaseAppID];
+    FIRInstanceIDURLQueryItem *item =
+        [FIRInstanceIDURLQueryItem queryItemWithName:kFIRInstanceIDTokenOptionsFirebaseAppIDKey
+                                               value:(NSString *)firebaseAppID];
     [queryItems addObject:item];
   }
 
-  NSURLComponents *components = [[NSURLComponents alloc] init];
-  components.queryItems = queryItems;
-  NSString *content = components.query;
+  NSString *content = FIRInstanceIDQueryFromQueryItems(queryItems);
   request.HTTPBody = [content dataUsingEncoding:NSUTF8StringEncoding];
   FIRInstanceIDLoggerDebug(kFIRInstanceIDMessageCodeTokenFetchOperationFetchRequest,
                            @"Register request to %@ content: %@", FIRInstanceIDRegisterServer(),

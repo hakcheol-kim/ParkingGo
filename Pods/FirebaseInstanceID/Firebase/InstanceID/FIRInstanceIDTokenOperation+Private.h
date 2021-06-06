@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-#import "Firebase/InstanceID/FIRInstanceIDTokenOperation.h"
+#import "FIRInstanceIDTokenOperation.h"
 
-#import "Firebase/InstanceID/FIRInstanceIDUtilities.h"
+#import "FIRInstanceIDUtilities.h"
+
+@class FIRInstanceIDURLQueryItem;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -40,9 +42,10 @@ NS_ASSUME_NONNULL_BEGIN
                     instanceID:(NSString *)instanceID;
 
 #pragma mark - Request Construction
-+ (NSMutableArray<NSURLQueryItem *> *)standardQueryItemsWithDeviceID:(NSString *)deviceID
-                                                               scope:(NSString *)scope;
++ (NSMutableArray<FIRInstanceIDURLQueryItem *> *)standardQueryItemsWithDeviceID:(NSString *)deviceID
+                                                                          scope:(NSString *)scope;
 - (NSMutableURLRequest *)tokenRequest;
+- (NSArray<FIRInstanceIDURLQueryItem *> *)queryItemsWithInstanceID:(NSString *)instanceID;
 
 #pragma mark - HTTP Headers
 /**

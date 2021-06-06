@@ -82,11 +82,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)saveTokenInfo:(FIRInstanceIDTokenInfo *)tokenInfo
               handler:(nullable void (^)(NSError *))handler;
 
-/*
- * Save the instanceID token info to the cache only.
- */
-- (void)saveTokenInfoInCacheOnly:(FIRInstanceIDTokenInfo *)tokenInfo;
-
 #pragma mark - Delete
 
 /**

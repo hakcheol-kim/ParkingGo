@@ -1,13 +1,8 @@
 ${PODS_ROOT}/Target Support Files/Pods-ParkingGo/Pods-ParkingGo-frameworks.sh
-${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework
-${BUILT_PRODUCTS_DIR}/FirebaseCoreDiagnostics/FirebaseCoreDiagnostics.framework
-${BUILT_PRODUCTS_DIR}/FirebaseInstallations/FirebaseInstallations.framework
-${BUILT_PRODUCTS_DIR}/FirebaseInstanceID/FirebaseInstanceID.framework
-${BUILT_PRODUCTS_DIR}/FirebaseMessaging/FirebaseMessaging.framework
-${BUILT_PRODUCTS_DIR}/GoogleDataTransport/GoogleDataTransport.framework
 ${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework
 ${BUILT_PRODUCTS_DIR}/KafkaRefresh/KafkaRefresh.framework
 ${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework
+${BUILT_PRODUCTS_DIR}/Protobuf/Protobuf.framework
 ${BUILT_PRODUCTS_DIR}/Toast-Swift/Toast_Swift.framework
 ${BUILT_PRODUCTS_DIR}/WKCookieWebView/WKCookieWebView.framework
 ${BUILT_PRODUCTS_DIR}/nanopb/nanopb.framework

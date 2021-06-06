@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#import "Firebase/InstanceID/FIRInstanceIDAuthKeyChain.h"
-#import "Firebase/InstanceID/FIRInstanceIDKeychain.h"
-#import "Firebase/InstanceID/FIRInstanceIDLogger.h"
+#import "FIRInstanceIDAuthKeyChain.h"
+#import "FIRInstanceIDKeychain.h"
+#import "FIRInstanceIDLogger.h"
 
 /**
  *  The error type representing why we couldn't read data from the keychain.
@@ -202,18 +202,6 @@ NSString *const kFIRInstanceIDKeychainWildcardIdentifier = @"*";
                            }];
   // Set the cache value. This must happen after removeItemsMatchingService:account:handler was
   // called, so the cache value was reset before setting a new value.
-  if (_cachedKeychainData[service]) {
-    if (_cachedKeychainData[service][account]) {
-      _cachedKeychainData[service][account] = @[ data ];
-    } else {
-      [_cachedKeychainData[service] setObject:@[ data ] forKey:account];
-    }
-  } else {
-    [_cachedKeychainData setObject:[@{account : @[ data ]} mutableCopy] forKey:service];
-  }
-}
-
-- (void)setDataInCache:(NSData *)data forService:(NSString *)service account:(NSString *)account {
   if (_cachedKeychainData[service]) {
     if (_cachedKeychainData[service][account]) {
       _cachedKeychainData[service][account] = @[ data ];

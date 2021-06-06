@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#import "Firebase/InstanceID/FIRInstanceIDTokenDeleteOperation.h"
+#import "FIRInstanceIDTokenDeleteOperation.h"
 
-#import "Firebase/InstanceID/FIRInstanceIDConstants.h"
-#import "Firebase/InstanceID/FIRInstanceIDDefines.h"
-#import "Firebase/InstanceID/FIRInstanceIDLogger.h"
-#import "Firebase/InstanceID/FIRInstanceIDTokenOperation+Private.h"
-#import "Firebase/InstanceID/FIRInstanceIDUtilities.h"
-#import "Firebase/InstanceID/NSError+FIRInstanceID.h"
-#import "Firebase/InstanceID/Private/FIRInstanceIDCheckinPreferences.h"
+#import "FIRInstanceIDCheckinPreferences.h"
+#import "FIRInstanceIDDefines.h"
+#import "FIRInstanceIDLogger.h"
+#import "FIRInstanceIDTokenOperation+Private.h"
+#import "FIRInstanceIDURLQueryItem.h"
+#import "FIRInstanceIDUtilities.h"
+#import "NSError+FIRInstanceID.h"
 
 @implementation FIRInstanceIDTokenDeleteOperation
 
@@ -47,25 +47,24 @@
 
   // Build form-encoded body
   NSString *deviceAuthID = self.checkinPreferences.deviceID;
-  NSMutableArray<NSURLQueryItem *> *queryItems =
+  NSMutableArray<FIRInstanceIDURLQueryItem *> *queryItems =
       [FIRInstanceIDTokenOperation standardQueryItemsWithDeviceID:deviceAuthID scope:self.scope];
-  [queryItems addObject:[NSURLQueryItem queryItemWithName:@"delete" value:@"true"]];
+  [queryItems addObject:[FIRInstanceIDURLQueryItem queryItemWithName:@"delete" value:@"true"]];
   if (self.action == FIRInstanceIDTokenActionDeleteTokenAndIID) {
-    [queryItems addObject:[NSURLQueryItem queryItemWithName:@"iid-operation" value:@"delete"]];
+    [queryItems addObject:[FIRInstanceIDURLQueryItem queryItemWithName:@"iid-operation"
+                                                                 value:@"delete"]];
   }
   if (self.authorizedEntity) {
-    [queryItems addObject:[NSURLQueryItem queryItemWithName:@"sender" value:self.authorizedEntity]];
+    [queryItems addObject:[FIRInstanceIDURLQueryItem queryItemWithName:@"sender"
+                                                                 value:self.authorizedEntity]];
   }
   // Typically we include our public key-signed url items, but in some cases (like deleting all FCM
   // tokens), we don't.
   if (self.instanceID.length > 0) {
-    [queryItems addObject:[NSURLQueryItem queryItemWithName:kFIRInstanceIDParamInstanceID
-                                                      value:self.instanceID]];
+    [queryItems addObjectsFromArray:[self queryItemsWithInstanceID:self.instanceID]];
   }
 
-  NSURLComponents *components = [[NSURLComponents alloc] init];
-  components.queryItems = queryItems;
-  NSString *content = components.query;
+  NSString *content = FIRInstanceIDQueryFromQueryItems(queryItems);
   request.HTTPBody = [content dataUsingEncoding:NSUTF8StringEncoding];
   FIRInstanceIDLoggerDebug(kFIRInstanceIDMessageCodeTokenDeleteOperationFetchRequest,
                            @"Unregister request to %@ content: %@", FIRInstanceIDRegisterServer(),
