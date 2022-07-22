@@ -9,8 +9,8 @@
   <td>메인 화면</td>
 </tr>
 <tr>
-<td><img src="" width=270, height=480></td>
-<td><img src="" width=270, height=480></td>
+<td><img src="https://github.com/iruri2010/ParkingGo/blob/main/login.png" width=270, height=480></td>
+<td><img src="https://github.com/iruri2010/ParkingGo/blob/main/main.png" width=270, height=480></td>
 </tr>
 </table>
 
